@@ -44,9 +44,6 @@ app.get("/user/:id", async(req, res) => {
     console.error(err.message);
   }
 })
-app.listen(8001, () => {
-  console.log("Server is listening");
-})
 
 //Getting all sheets
 app.get("/user/:id/sheets", async(req, res) => {
@@ -59,9 +56,6 @@ app.get("/user/:id/sheets", async(req, res) => {
   } catch (err) {
     console.error(err.message);
   }
-})
-app.listen(8001, () => {
-  console.log("Server is listening");
 })
 
 //Getting specific sheets
