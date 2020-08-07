@@ -1,12 +1,81 @@
 const express = require("express");
 const app = express();
 const cors = require("cors");
+const pool = require("./schema/db");
 
 app.use(cors());
 app.use(express.json());
 
+//Routes
+//Adding user
+app.post("/user/signup", async(req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const newUser = await pool.query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
+    [name, email, password])
 
+    res.json(newUser.rows[0]);
+  } catch (error) {
+    console.error(err.message);
+  }
+})
+//adding sheet
+app.post("/user/:id/sheets", async(req, res) => {
+  try {
+    const { user_id, is_public, is_saved } = req.body;
+    const newUser = await pool.query(`INSERT INTO sheets (user_id, is_public, is_saved) VALUES ($1, $2, $3) RETURNING *`,
+    [user_id, is_public, is_saved])
 
+    res.json(newUser.rows[0]);
+  } catch (error) {
+    console.error(err.message);
+  }
+})
+
+//Getting user
+app.get("/user/:id", async(req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUser = await pool.query(`SELECT * FROM users WHERE id = $1`, [
+      id])
+
+    res.json(currentUser.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+})
 app.listen(8001, () => {
-  console.log("Sever is listening");
+  console.log("Server is listening");
+})
+
+//Getting all sheets
+app.get("/user/:id/sheets", async(req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUser = await pool.query(`SELECT * FROM sheets WHERE user_id = $1`, [
+      id])
+
+    res.json(currentUser.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+app.listen(8001, () => {
+  console.log("Server is listening");
+})
+
+//Getting specific sheets
+app.get("/user/:id/sheets/:id", async(req, res) => {
+  try {
+    const { user_id, sheet_id } = req.params;
+    const currentUser = await pool.query(`SELECT * FROM sheets WHERE user_id = $1 AND id = $2`, [
+      user_id, sheet_id])
+
+    res.json(currentUser.rows[0]);
+  } catch (err) {
+    console.error(err.message);
+  }
+})
+app.listen(8001, () => {
+  console.log("Server is listening");
 })
