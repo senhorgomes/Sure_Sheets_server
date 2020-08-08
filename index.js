@@ -10,13 +10,15 @@ app.use(express.json());
 //Adding user
 app.post("/user/signup", async(req, res) => {
   try {
+    console.log(req.body);
     const { name, email, password } = req.body;
+    console.log(name);
     const newUser = await pool.query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
     [name, email, password])
 
     res.json(newUser.rows[0]);
-  } catch (error) {
-    console.error(err.message);
+  } catch (err) {
+    console.log(err.message);
   }
 })
 //adding sheet
@@ -28,6 +30,19 @@ app.post("/user/:id/sheets", async(req, res) => {
 
     res.json(newUser.rows[0]);
   } catch (error) {
+    console.error(err.message);
+  }
+})
+//logging in user
+app.post("/login", async(req, res) => {
+  try {
+    const { email } = req.body;
+    console.log(email);
+    const currentUser = await pool.query(`SELECT * FROM users WHERE email = $1`, [
+      email])
+
+    res.json(currentUser.rows[0]);
+  } catch (err) {
     console.error(err.message);
   }
 })
