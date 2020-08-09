@@ -2,11 +2,24 @@ const express = require("express");
 const app = express();
 const cors = require("cors");
 const pool = require("./schema/db");
+const cookieSession = require('cookie-session');
+const bodyParser = require("body-parser");
+app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(cors());
 app.use(express.json());
-
+app.use(cookieSession({
+  name: 'session',
+  keys: ['super-secret-key', 'key2']
+}));
 //Routes
+app.get("/", (req, res) => {
+  templateVars ={
+    userId : req.session.userId
+  }
+  res.render("index", templateVars);
+});
+
 //Adding user
 app.post("/user/signup", async(req, res) => {
   try {
@@ -35,19 +48,28 @@ app.post("/user/:id/sheets", async(req, res) => {
 })
 //logging in user
 app.post("/login", async(req, res) => {
+  
   try {
     const { email, password } = req.body;
-    console.log(email);
-    const currentUser = await pool.query(`SELECT * FROM users WHERE email = $1 AND password = $2`, [
+    console.log("First check", email);
+    const currentUser = await pool.query(`SELECT name FROM users WHERE email = $1 AND password = $2`, [
       email, password]).then((data) => {
-        console.log(data)
+        //console.log(data)
         if (data.rowCount === 1) {
+          const userProfile = data.rows[0];
+          const userId = userProfile.name
+          console.log(userId);
+          //req.session['user_id'] = userId
+          return userId;
+          console.log("req-sessions user", req.session['user_id']);
           console.log("Hurray")
         } else {
+          console.log("No log in for you")
           res.status(403).send("Error! Name or email do not exist. Please register if you havent.")
         }
       })
-    res.json(currentUser.rows[0]);
+    console.log(currentUser);
+    res.json(currentUser);
   } catch (err) {
     console.error(err.message);
   }
