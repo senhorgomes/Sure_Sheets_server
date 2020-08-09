@@ -36,11 +36,17 @@ app.post("/user/:id/sheets", async(req, res) => {
 //logging in user
 app.post("/login", async(req, res) => {
   try {
-    const { email } = req.body;
+    const { email, password } = req.body;
     console.log(email);
-    const currentUser = await pool.query(`SELECT * FROM users WHERE email = $1`, [
-      email])
-
+    const currentUser = await pool.query(`SELECT * FROM users WHERE email = $1 AND password = $2`, [
+      email, password]).then((data) => {
+        console.log(data)
+        if (data.rowCount === 1) {
+          console.log("Hurray")
+        } else {
+          res.status(403).send("Error! Name or email do not exist. Please register if you havent.")
+        }
+      })
     res.json(currentUser.rows[0]);
   } catch (err) {
     console.error(err.message);
