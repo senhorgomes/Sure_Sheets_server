@@ -27,9 +27,21 @@ app.post("/user/signup", async(req, res) => {
     const { name, email, password } = req.body;
     console.log(name);
     const newUser = await pool.query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
-    [name, email, password])
+    [name, email, password]).then((data) => {
+      //console.log(data)
+      if (data.rowCount === 1) {
+        const userProfile = data.rows[0];
+        const userId = userProfile.name
+        console.log(userId);
+        //req.session['user_id'] = userId
+        return userId;
+      } else {
+        console.log("No log in for you")
+        res.status(403).send("Error! Name or email do not exist. Please register if you havent.")
+      }
+    })
 
-    res.json(newUser.rows[0]);
+    res.json(newUser);
   } catch (err) {
     console.log(err.message);
   }
@@ -68,7 +80,7 @@ app.post("/login", async(req, res) => {
           res.status(403).send("Error! Name or email do not exist. Please register if you havent.")
         }
       })
-    console.log(currentUser);
+    console.log("Hey this is message 1", currentUser);
     res.json(currentUser);
   } catch (err) {
     console.error(err.message);
