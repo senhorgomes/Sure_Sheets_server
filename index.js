@@ -27,24 +27,25 @@ app.get("/", (req, res) => {
 app.post("/user/signup", async(req, res) => {
   try {
     console.log(req.body);
+    //Request the information passed onto the text fields
     const { name, email, password } = req.body;
+    //Passwords are hashed through bcrypt, which are then saved into the database
     let hashedPassword =  bcrypt.hashSync(password, saltRounds);
     console.log(name);
+    //Query to insert data into the database, returns the data because users name will be added onto frontend
     const newUser = await pool.query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
     [name, email, hashedPassword]).then((data) => {
-      //console.log(data)
       if (data.rowCount === 1) {
+        //Finds userProfile from data
         const userProfile = data.rows[0];
         const userId = userProfile.name
-        console.log(userId);
-        //req.session['user_id'] = userId
         return userId;
       } else {
         console.log("No log in for you")
         res.status(403).send("Error! Name or email do not exist. Please register if you havent.")
       }
     })
-
+    //User name gets sent to frontend via json
     res.json(newUser);
   } catch (err) {
     console.log(err.message);
@@ -67,28 +68,26 @@ app.post("/login", async(req, res) => {
   try {
     const { email, password } = req.body;
     console.log("First check", email);
+    //Query to find full profile from email
     const currentUser = await pool.query(`SELECT * FROM users WHERE email = $1`, [
       email]).then((data) => {
-        //Identify user, check password
-        const userProfile = data.rows[0];
-        console.log("Should be normal", password)
-        console.log("Should be hashed", userProfile)
-
-        if (bcrypt.compareSync(password, userProfile.password)) {
-          if (data.rowCount === 1) {
+        if (data.rowCount === 1) {
+          //User is identified, userProfile is set
+          const userProfile = data.rows[0];
+          //Since passwords are encrypted, it decrypts the password, and verifies it with the database
+          if (bcrypt.compareSync(password, userProfile.password)) {
+            //The only thing we want to send to the front end is the name of the user
             const userId = userProfile.name
             console.log(userId);
-            //req.session['user_id'] = userId
             return userId;
-            console.log("req-sessions user", req.session['user_id']);
-            console.log("Hurray")
           }
         } else {
-          console.log("No log in for you")
+          console.log("Error, user not found")
           res.status(403).send("Error! Name or email do not exist. Please register if you havent.")
         }
       })
-    console.log("Hey this is message 1", currentUser);
+    console.log("Success, user is ", currentUser);
+    //Sends the name of the user to the frontend using json
     res.json(currentUser);
   } catch (err) {
     console.error(err.message);
