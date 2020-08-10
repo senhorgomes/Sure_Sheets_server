@@ -4,6 +4,9 @@ const cors = require("cors");
 const pool = require("./schema/db");
 const cookieSession = require('cookie-session');
 const bodyParser = require("body-parser");
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
+
 app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(cors());
@@ -25,9 +28,10 @@ app.post("/user/signup", async(req, res) => {
   try {
     console.log(req.body);
     const { name, email, password } = req.body;
+    let hashedPassword =  bcrypt.hashSync(password, saltRounds);
     console.log(name);
     const newUser = await pool.query(`INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *`,
-    [name, email, password]).then((data) => {
+    [name, email, hashedPassword]).then((data) => {
       //console.log(data)
       if (data.rowCount === 1) {
         const userProfile = data.rows[0];
@@ -60,21 +64,25 @@ app.post("/user/:id/sheets", async(req, res) => {
 })
 //logging in user
 app.post("/login", async(req, res) => {
-  
   try {
     const { email, password } = req.body;
     console.log("First check", email);
-    const currentUser = await pool.query(`SELECT name FROM users WHERE email = $1 AND password = $2`, [
-      email, password]).then((data) => {
-        //console.log(data)
-        if (data.rowCount === 1) {
-          const userProfile = data.rows[0];
-          const userId = userProfile.name
-          console.log(userId);
-          //req.session['user_id'] = userId
-          return userId;
-          console.log("req-sessions user", req.session['user_id']);
-          console.log("Hurray")
+    const currentUser = await pool.query(`SELECT * FROM users WHERE email = $1`, [
+      email]).then((data) => {
+        //Identify user, check password
+        const userProfile = data.rows[0];
+        console.log("Should be normal", password)
+        console.log("Should be hashed", userProfile)
+
+        if (bcrypt.compareSync(password, userProfile.password)) {
+          if (data.rowCount === 1) {
+            const userId = userProfile.name
+            console.log(userId);
+            //req.session['user_id'] = userId
+            return userId;
+            console.log("req-sessions user", req.session['user_id']);
+            console.log("Hurray")
+          }
         } else {
           console.log("No log in for you")
           res.status(403).send("Error! Name or email do not exist. Please register if you havent.")
