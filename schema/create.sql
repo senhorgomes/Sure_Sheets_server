@@ -1,8 +1,8 @@
-DROP DATABASE IF EXISTS sheet_database;
+
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS sheets;
 -- DROP TABLE IF EXISTS resources;
-CREATE DATABASE sheet_database;
+
 
 
 CREATE TABLE users (
